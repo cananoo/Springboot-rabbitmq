@@ -2,9 +2,11 @@ package com.rabbitmq.springbootrabbitmq.config;
 
 
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import springfox.documentation.service.ApiListing;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +22,8 @@ public class TtlQueueConfig {
     public static final String QUEUE_B = "QB";
     //死信队列的名称
     public static final String DEAD_LETTER_QUEUE = "QD";
+    //通用普通队列的名称
+    public static final String QUEUE_C = "QC";
 
     // 声名xExchange 别名
     @Bean("xExchange")
@@ -63,6 +67,17 @@ public class TtlQueueConfig {
         return QueueBuilder.durable(DEAD_LETTER_QUEUE).build();
     }
 
+    //声名通用普通队列C
+    @Bean("queueC")
+    public Queue QueueC(){
+        Map<String,Object> args = new HashMap<>();
+        // 设置死信交换机
+        args.put("x-dead-letter-exchange",Y_DEAD_LETTER_EXCHANGE);
+        // 设置死信routingKey
+        args.put("x-dead-letter-routing-key","YD");
+        return QueueBuilder.durable(QUEUE_C).withArguments(args).build();
+    }
+
     //绑定
     @Bean
     public Binding queueABindingX(@Qualifier("queueA") Queue queueA,
@@ -74,12 +89,18 @@ public class TtlQueueConfig {
                                   @Qualifier("xExchange") DirectExchange xExchange){
         return BindingBuilder.bind(queueB).to(xExchange).with("XB");
     }
-
+    @Bean
+    public Binding queueCBindingX(@Qualifier("queueC") Queue queueC,
+                                  @Qualifier("xExchange") DirectExchange xExchange){
+       return BindingBuilder.bind(queueC).to(xExchange).with("XC");
+    }
     @Bean
     public Binding queueDBindingX(@Qualifier("queueD") Queue queueD,
                                   @Qualifier("yExchange") DirectExchange xExchange){
         return BindingBuilder.bind(queueD).to(xExchange).with("YD");
     }
+
+
 
 
 }
